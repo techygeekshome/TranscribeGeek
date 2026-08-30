@@ -10,10 +10,18 @@ void Check(string name, bool ok, string? detail = null)
     if (!ok) failed++;
 }
 
+void Skip(string name, string why) => Console.WriteLine($"SKIP  {name} ({why})");
+
 // ---- MediaDecoder -----------------------------------------------------------------
 Check("mp4 is a supported extension", MediaDecoder.IsSupported("a.MP4"));
 Check("txt is not", !MediaDecoder.IsSupported("a.txt"));
-Check("ffmpeg found on this machine", MediaDecoder.FfmpegAvailable, "tests that need decoding will be skipped");
+// ffmpeg is OPTIONAL by design - the app says so plainly and still handles 16 kHz mono WAV -
+// so its absence is reported, never failed. CI runners do not all carry it, and a check that
+// fails the build for a missing optional dependency is a check that trains people to ignore CI.
+if (MediaDecoder.FfmpegAvailable)
+    Check("ffmpeg found, so the decoding checks can run", true);
+else
+    Skip("ffmpeg decoding checks", "ffmpeg is not on this machine - it is optional");
 
 var sample = Environment.GetEnvironmentVariable("TG_SAMPLE_WAV") ?? "/tmp/tgprobe/jfk.wav";
 if (File.Exists(sample))
