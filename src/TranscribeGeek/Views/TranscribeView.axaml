@@ -1,0 +1,125 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TranscribeGeek.ViewModels"
+             x:Class="TranscribeGeek.Views.TranscribeView"
+             x:DataType="vm:ShellViewModel">
+
+  <ScrollViewer>
+    <StackPanel Margin="26,20" Spacing="16">
+
+      <!-- Anything standing between the user and a working transcription, said once, at the top -->
+      <Border Classes="band" IsVisible="{Binding HasReadinessProblem}">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <Border Width="4" CornerRadius="2" Background="{StaticResource Amber}" />
+          <TextBlock Text="{Binding Readiness}" Classes="sub" MaxWidth="720"
+                     VerticalAlignment="Center" />
+        </StackPanel>
+      </Border>
+
+      <!-- = options -->
+      <Border Classes="card">
+        <StackPanel>
+          <Border Classes="cardhead">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="How it should be read" FontWeight="SemiBold" />
+              <TextBlock Grid.Column="1" Classes="meta"
+                         Text="Applies to everything in the queue" VerticalAlignment="Center" />
+            </Grid>
+          </Border>
+
+          <Grid Margin="17,15" ColumnDefinitions="*,16,*" RowDefinitions="Auto,Auto">
+            <StackPanel Grid.Row="0" Grid.Column="0" Spacing="5">
+              <TextBlock Text="Speech model" FontSize="12" Foreground="{StaticResource Txt2}" />
+              <ComboBox ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModel}"
+                        HorizontalAlignment="Stretch" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="0" Grid.Column="2" Spacing="5">
+              <TextBlock Text="Language" FontSize="12" Foreground="{StaticResource Txt2}" />
+              <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}"
+                        HorizontalAlignment="Stretch" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                        Orientation="Horizontal" Spacing="22" Margin="0,15,0,0">
+              <CheckBox IsChecked="{Binding WriteTimestamps}" Content="Put timestamps in the text file" />
+              <CheckBox IsChecked="{Binding WriteSubtitles}" Content="Also write a .srt subtitle file" />
+            </StackPanel>
+          </Grid>
+
+          <Border Classes="row" BorderThickness="0,1,0,0">
+            <TextBlock Classes="sub"
+                       Text="Transcripts are written next to the file they came from. Nothing is ever overwritten - if a transcript is already there, the next one is numbered." />
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <!-- = empty state -->
+      <Border Classes="drop" IsVisible="{Binding !HasJobs}" MinHeight="220">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="9">
+          <TextBlock Text="Drop audio or video files here" FontSize="16" FontWeight="SemiBold"
+                     HorizontalAlignment="Center" />
+          <TextBlock Classes="sub" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="460"
+                     Text="WAV, MP3, M4A, FLAC, OGG, WMA, MP4, MKV, MOV, AVI and WebM. They are read on this machine and nothing is uploaded." />
+          <Button Classes="toolbtn" Content="Choose files…" HorizontalAlignment="Center"
+                  Margin="0,6,0,0" Click="OnAddFiles" />
+        </StackPanel>
+      </Border>
+
+      <!-- = queue -->
+      <Border Classes="card" IsVisible="{Binding HasJobs}">
+        <StackPanel>
+          <Border Classes="cardhead">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="Queue" FontWeight="SemiBold" />
+              <TextBlock Grid.Column="1" Classes="meta" VerticalAlignment="Center"
+                         Text="One file at a time - Whisper already uses every core" />
+            </Grid>
+          </Border>
+
+          <ItemsControl ItemsSource="{Binding Jobs}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:JobViewModel">
+                <Border Classes="row">
+                  <Grid ColumnDefinitions="4,14,*,Auto" RowDefinitions="Auto,Auto,Auto">
+
+                    <Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Width="4"
+                            CornerRadius="2" Background="{Binding StateBrush}" />
+
+                    <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Spacing="9">
+                      <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="13.5"
+                                 TextTrimming="CharacterEllipsis" MaxWidth="520" />
+                      <TextBlock Text="{Binding DurationText}" Classes="mono"
+                                 VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Status}" Classes="sub"
+                               Margin="0,3,0,0" />
+
+                    <ProgressBar Grid.Row="2" Grid.Column="2" Height="4" Margin="0,9,0,2"
+                                 Minimum="0" Maximum="100" Value="{Binding Progress}"
+                                 IsVisible="{Binding ShowProgress}" />
+
+                    <StackPanel Grid.Row="0" Grid.RowSpan="3" Grid.Column="3"
+                                Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                      <Button Classes="ghost" Content="Open transcript"
+                              Command="{Binding OpenTranscript}"
+                              IsVisible="{Binding HasOutput}" />
+                      <Button Classes="ghost" Content="Open folder"
+                              Command="{Binding OpenFolder}"
+                              IsVisible="{Binding HasOutput}" />
+                      <TextBlock Text="{Binding StateText}" Classes="meta"
+                                 VerticalAlignment="Center" MinWidth="52"
+                                 TextAlignment="Right" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
