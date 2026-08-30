@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XML_DIZ_INFO>
+  <MASTER_PAD_VERSION_INFO>
+    <MASTER_PAD_VERSION>4.0</MASTER_PAD_VERSION>
+    <MASTER_PAD_EDITOR>TechyGeeksHome</MASTER_PAD_EDITOR>
+    <MASTER_PAD_INFO>Portable Application Description, or PAD for short, is a data set that is used by shareware authors to disseminate information to anyone interested in their software products.</MASTER_PAD_INFO>
+  </MASTER_PAD_VERSION_INFO>
+  <Company_Info>
+    <Company_Name>TechyGeeksHome</Company_Name>
+    <Address_1></Address_1>
+    <Address_2></Address_2>
+    <City_Town></City_Town>
+    <State_Province></State_Province>
+    <Zip_Postal_Code></Zip_Postal_Code>
+    <Country>United Kingdom</Country>
+    <Company_WebSite_URL>https://techygeekshome.info</Company_WebSite_URL>
+    <Contact_Info>
+      <Author_First_Name>Andy</Author_First_Name>
+      <Author_Last_Name>Armstrong</Author_Last_Name>
+      <Author_Email>techygeeks@outlook.com</Author_Email>
+      <Contact_First_Name>Andy</Contact_First_Name>
+      <Contact_Last_Name>Armstrong</Contact_Last_Name>
+      <Contact_Email>techygeeks@outlook.com</Contact_Email>
+    </Contact_Info>
+    <Support_Info>
+      <Sales_Email>techygeeks@outlook.com</Sales_Email>
+      <Support_Email>techygeeks@outlook.com</Support_Email>
+      <General_Email>techygeeks@outlook.com</General_Email>
+    </Support_Info>
+  </Company_Info>
+  <Program_Info>
+    <Program_Name>TranscribeGeek</Program_Name>
+    <Program_Version>1.0.0</Program_Version>
+    <Program_Release_Month>08</Program_Release_Month>
+    <Program_Release_Day>30</Program_Release_Day>
+    <Program_Release_Year>2026</Program_Release_Year>
+    <Program_Cost_Dollars>0</Program_Cost_Dollars>
+    <Program_Type>Freeware</Program_Type>
+    <Program_Release_Status>Major Update</Program_Release_Status>
+    <Program_Install_Support>Install and Uninstall</Program_Install_Support>
+    <Program_OS_Support>Win10,Win11,WinServer</Program_OS_Support>
+    <Program_Language>English</Program_Language>
+    <Program_Change_Info>First public release.</Program_Change_Info>
+    <Program_Specific_Category>Multimedia & Design::Other</Program_Specific_Category>
+    <Program_Category_Class>Audio</Program_Category_Class>
+    <Program_System_Requirements>Windows 10 version 1809 or later, 64-bit. Nothing else to install.</Program_System_Requirements>
+    <File_Info>
+      <File_Size_Bytes>74000000</File_Size_Bytes>
+      <File_Size_K>72265</File_Size_K>
+      <File_Size_MB>70</File_Size_MB>
+    </File_Info>
+    <Expire_Info>
+      <Has_Expire_Info>N</Has_Expire_Info>
+    </Expire_Info>
+  </Program_Info>
+  <Program_Descriptions>
+    <English>
+      <Keywords>transcription, whisper, speech to text, subtitles, srt, offline, free, windows</Keywords>
+      <Char_Desc_45>Offline speech-to-text for Windows</Char_Desc_45>
+      <Char_Desc_80>Turns recordings into text on your own machine - transcripts and subtitles</Char_Desc_80>
+      <Char_Desc_250>TranscribeGeek turns audio and video into text on your own machine. It runs OpenAI Whisper models locally, writes a transcript and an SRT subtitle file, and has no account, no upload and no per-minute limit.</Char_Desc_250>
+      <Char_Desc_450>TranscribeGeek turns audio and video recordings into text on your own machine. It runs OpenAI Whisper models locally through whisper.cpp, writing a plain text transcript beside the source file and, optionally, a SubRip SRT subtitle file. There is no account, no server, no upload and no per-minute limit. Four model sizes are downloaded on request rather than bundled, and 22 languages are supported plus automatic detection.</Char_Desc_450>
+      <Char_Desc_2000>TranscribeGeek turns audio and video recordings into text on your own machine.
+
+Drop files in, pick a model and a language, and press Transcribe. Each file gets a plain text transcript written beside it, with or without timestamps, and a SubRip SRT subtitle file too if you want one. Supported input includes WAV, MP3, M4A, FLAC, OGG, Opus, WMA, AAC, MP4, MKV, MOV, AVI and WebM.
+
+It runs OpenAI Whisper models locally through whisper.cpp. There is no account, no server and no upload - the recording never leaves the computer it is on. There is no per-minute cap, no monthly allowance and no trial.
+
+Four model sizes are offered, from 78 MB to 1.5 GB, and none of them are bundled into the installer: you pick one on the Models screen and it is fetched once and kept. 22 languages are supported, plus automatic language detection.
+
+TranscribeGeek never overwrites your files. If a transcript of that name already exists, the next one is numbered. ffmpeg is used as a separate program for formats other than plain WAV and is deliberately not bundled.
+
+Free to use, including at work. GPL-3.0. No paid tier.</Char_Desc_2000>
+    </English>
+  </Program_Descriptions>
+  <Web_Info>
+    <Application_URLs>
+      <Application_Info_URL>https://techygeekshome.info/transcribegeek/</Application_Info_URL>
+      <Application_Order_URL></Application_Order_URL>
+      <Application_Screenshot_URL>https://techygeekshome.info/wp-content/uploads/2026/08/transcribegeek-transcribe.png</Application_Screenshot_URL>
+      <Application_Icon_URL>https://techygeekshome.info/wp-content/uploads/2026/08/transcribegeek-32.png</Application_Icon_URL>
+      <Application_XML_File_URL>https://raw.githubusercontent.com/techygeekshome/TranscribeGeek/main/pad/transcribegeek.xml</Application_XML_File_URL>
+    </Application_URLs>
+    <Download_URLs>
+      <Primary_Download_URL>https://github.com/techygeekshome/TranscribeGeek/releases/latest/download/TranscribeGeekSetup.exe</Primary_Download_URL>
+      <Secondary_Download_URL>https://github.com/techygeekshome/TranscribeGeek/releases/latest/download/TranscribeGeek-portable.exe</Secondary_Download_URL>
+    </Download_URLs>
+  </Web_Info>
+</XML_DIZ_INFO>
