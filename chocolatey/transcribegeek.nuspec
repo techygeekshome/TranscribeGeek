@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>transcribegeek</id>
+    <version>1.0.1</version>
+    <title>TranscribeGeek</title>
+    <authors>TechyGeeksHome</authors>
+    <owners>techygeekshome</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">GPL-3.0-or-later</license>
+    <projectUrl>https://techygeekshome.info/transcribegeek/</projectUrl>
+    <iconUrl>https://cdn.jsdelivr.net/gh/techygeekshome/TranscribeGeek@78e90e11cec026d6664ba3fca8761dd4fcbeaaeb/icons/transcribegeek-256.png</iconUrl>
+    <description>TranscribeGeek turns recordings into text on your own machine, using Whisper models that run
+locally. Nothing is uploaded, so an interview, a meeting or a medical recording never leaves the
+computer.
+
+* Transcribe audio and video files, queued in a batch
+* Choose the Whisper model to match the machine - the download size is shown before you commit
+* Output plain text or timed SRT subtitles
+* Works with no internet connection once a model has been downloaded
+* No account, no adverts, no bundled offers, no per-minute charge
+
+Open source under GPL-3.0. The .NET 8 runtime is bundled, so there is nothing to install first.</description>
+    <summary>Free offline speech-to-text for Windows - transcribe audio and video on your own machine</summary>
+    <releaseNotes>https://github.com/techygeekshome/TranscribeGeek/releases/tag/v1.0.1</releaseNotes>
+    <copyright>Copyright (c) 2026 TechyGeeksHome</copyright>
+    <tags>transcribegeek transcription speech-to-text whisper subtitles offline windows foss</tags>
+    <projectSourceUrl>https://github.com/techygeekshome/TranscribeGeek</projectSourceUrl>
+    <packageSourceUrl>https://github.com/techygeekshome/TranscribeGeek</packageSourceUrl>
+    <docsUrl>https://techygeekshome.info/transcribegeek/</docsUrl>
+    <bugTrackerUrl>https://github.com/techygeekshome/TranscribeGeek/issues</bugTrackerUrl>
+  </metadata>
+</package>
