@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TranscribeGeek.ViewModels"
+             x:Class="TranscribeGeek.Views.SettingsView"
+             x:DataType="vm:ShellViewModel">
+
+  <ScrollViewer>
+    <StackPanel Margin="26,20" Spacing="16" MaxWidth="820" HorizontalAlignment="Left">
+
+      <!-- Every app in the range says what it will not do, on screen, in the app -->
+      <Border Classes="card">
+        <StackPanel>
+          <Border Classes="cardhead">
+            <TextBlock Text="What TranscribeGeek will not do" FontWeight="SemiBold" />
+          </Border>
+
+          <Border Classes="row">
+            <StackPanel Spacing="3">
+              <TextBlock Text="It does not send your recordings anywhere" FontWeight="SemiBold" />
+              <TextBlock Classes="sub"
+                         Text="Transcription runs in this process, on this machine, using your own processor. There is no account, no server and no upload. The only thing the app ever downloads is a speech model, from the Models screen, when you ask for one." />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="row">
+            <StackPanel Spacing="3">
+              <TextBlock Text="It does not overwrite your files" FontWeight="SemiBold" />
+              <TextBlock Classes="sub"
+                         Text="Transcripts are written beside the source file. If one is already there, the next is numbered rather than replacing it. The source file itself is only ever read." />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="row">
+            <StackPanel Spacing="3">
+              <TextBlock Text="It does not bundle ffmpeg" FontWeight="SemiBold" />
+              <TextBlock Classes="sub"
+                         Text="MP3, MP4 and the rest need ffmpeg to decode. TranscribeGeek runs it as a separate program if it finds one, and says so plainly if it does not, rather than quietly fetching a 90 MB binary you did not ask for. Plain 16 kHz mono WAV files work either way." />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="row" BorderThickness="0">
+            <StackPanel Spacing="3">
+              <TextBlock Text="It is free, including at work" FontWeight="SemiBold" />
+              <TextBlock Classes="sub"
+                         Text="No paid tier, no trial, no watermark, no per-minute limit. GPL-3.0, source on GitHub." />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel>
+          <Border Classes="cardhead">
+            <TextBlock Text="Where things are kept" FontWeight="SemiBold" />
+          </Border>
+
+          <Border Classes="row">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Speech models" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding ModelFolder}" Classes="mono" TextWrapping="Wrap" />
+              <TextBlock Classes="sub" Margin="0,2,0,0"
+                         Text="Under your own profile rather than beside the program, so a reinstall does not mean downloading them again." />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="row" BorderThickness="0">
+            <StackPanel Spacing="4">
+              <TextBlock Text="ffmpeg" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding FfmpegLocation}" Classes="mono" TextWrapping="Wrap" />
+              <TextBlock Classes="sub" Margin="0,2,0,0"
+                         Text="Looked for next to TranscribeGeek first, then on the system path." />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
