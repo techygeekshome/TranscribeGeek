@@ -22,6 +22,16 @@ public partial class MainWindow : Window
 
     private ShellViewModel? Vm => DataContext as ShellViewModel;
 
+    /// <summary>
+    /// Whisper and the speaker models both hold native handles. Letting go of them when the
+    /// window closes means the process actually exits rather than lingering.
+    /// </summary>
+    protected override void OnClosed(EventArgs e)
+    {
+        Vm?.Shutdown();
+        base.OnClosed(e);
+    }
+
     // ------------------------------------------------------------------ drag and drop
 
     /// <summary>

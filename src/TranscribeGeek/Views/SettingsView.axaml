@@ -38,6 +38,14 @@
             </StackPanel>
           </Border>
 
+          <Border Classes="row">
+            <StackPanel Spacing="3">
+              <TextBlock Text="It does not claim to know who is talking" FontWeight="SemiBold" />
+              <TextBlock Classes="sub"
+                         Text="Speaker labels are a good guess, not a fact. Two similar voices on a poor recording can end up as one Speaker, and one voice can occasionally be split into two. The labels are Speaker 1 and Speaker 2, never a name, because the app has no way of knowing a name and should not invent one. If the speaker pass fails, the transcript is still written." />
+            </StackPanel>
+          </Border>
+
           <Border Classes="row" BorderThickness="0">
             <StackPanel Spacing="3">
               <TextBlock Text="It is free, including at work" FontWeight="SemiBold" />
@@ -60,6 +68,15 @@
               <TextBlock Text="{Binding ModelFolder}" Classes="mono" TextWrapping="Wrap" />
               <TextBlock Classes="sub" Margin="0,2,0,0"
                          Text="Under your own profile rather than beside the program, so a reinstall does not mean downloading them again." />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="row">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Speaker models" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding SpeakerFolder}" Classes="mono" TextWrapping="Wrap" />
+              <TextBlock Classes="sub" Margin="0,2,0,0"
+                         Text="Checked against a checksum recorded inside TranscribeGeek before they are kept, so the app runs the exact models it was tested with or none at all." />
             </StackPanel>
           </Border>
 

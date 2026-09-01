@@ -27,7 +27,7 @@
             </Grid>
           </Border>
 
-          <Grid Margin="17,15" ColumnDefinitions="*,16,*" RowDefinitions="Auto,Auto">
+          <Grid Margin="17,15" ColumnDefinitions="*,16,*" RowDefinitions="Auto,Auto,Auto">
             <StackPanel Grid.Row="0" Grid.Column="0" Spacing="5">
               <TextBlock Text="Speech model" FontSize="12" Foreground="{StaticResource Txt2}" />
               <ComboBox ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModel}"
@@ -44,6 +44,23 @@
                         Orientation="Horizontal" Spacing="22" Margin="0,15,0,0">
               <CheckBox IsChecked="{Binding WriteTimestamps}" Content="Put timestamps in the text file" />
               <CheckBox IsChecked="{Binding WriteSubtitles}" Content="Also write a .srt subtitle file" />
+            </StackPanel>
+
+            <!-- Working out who is speaking. Off unless the pack is here, and the reason why is
+                 on screen rather than the tick box just being dead. -->
+            <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Spacing="6" Margin="0,15,0,0">
+              <StackPanel Orientation="Horizontal" Spacing="14">
+                <CheckBox IsChecked="{Binding IdentifySpeakers}"
+                          IsEnabled="{Binding CanIdentifySpeakers}"
+                          Content="Work out who is speaking" VerticalAlignment="Center" />
+                <TextBlock Text="How many people?" FontSize="12" VerticalAlignment="Center"
+                           Foreground="{StaticResource Txt2}"
+                           IsVisible="{Binding IdentifySpeakers}" />
+                <ComboBox ItemsSource="{Binding SpeakerCounts}" SelectedItem="{Binding SelectedSpeakerCount}"
+                          MinWidth="140" IsVisible="{Binding IdentifySpeakers}" />
+              </StackPanel>
+              <TextBlock Text="{Binding SpeakerHint}" Classes="sub" TextWrapping="Wrap"
+                         MaxWidth="640" HorizontalAlignment="Left" />
             </StackPanel>
           </Grid>
 
