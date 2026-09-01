@@ -10,5 +10,19 @@
     <!-- MIT. Wraps whisper.cpp; the .Runtime package carries the native binaries. -->
     <PackageReference Include="Whisper.net" Version="1.9.1" />
     <PackageReference Include="Whisper.net.Runtime" Version="1.9.1" />
+
+    <!-- Apache-2.0. Working out who is speaking. The managed wrapper is tiny; the native
+         binaries live in a separate per-platform package. -->
+    <PackageReference Include="org.k2fsa.sherpa.onnx" Version="1.13.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The shipped product is built on Windows, so that is the runtime that matters. The Linux
+         one is here only so the checks in tests/ can actually run diarisation on the CI runner
+         rather than skipping the one part of this that is hard to get right. -->
+    <PackageReference Include="org.k2fsa.sherpa.onnx.runtime.win-x64" Version="1.13.5"
+                      Condition="'$(OS)' == 'Windows_NT'" />
+    <PackageReference Include="org.k2fsa.sherpa.onnx.runtime.linux-x64" Version="1.13.5"
+                      Condition="'$(OS)' != 'Windows_NT'" />
   </ItemGroup>
 </Project>
