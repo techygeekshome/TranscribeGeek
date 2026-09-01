@@ -36,3 +36,20 @@ jobs:
         env:
           TG_DIARISE_WAV: /tmp/two-speakers.wav
         run: dotnet run --project tests/TranscribeGeek.Tests -c Release --no-build
+
+      # The checks above run against a build from source, where the native Whisper library sits
+      # in a runtimes folder next to the assembly. The product does not ship that way: it ships
+      # as one self-contained executable with the natives bundled inside it, and Whisper.net
+      # cannot find them there without help. 1.0.0 and 1.0.1 both shipped able to install and
+      # unable to transcribe because nothing ever ran the packaged shape.
+      #
+      # So the harness is published exactly the way the product is and run again. Linux rather
+      # than Windows only because this job is on a Linux runner; the bundling and the lookup are
+      # the same on both, and this is the step that catches it.
+      - name: Test the way it is actually packaged
+        run: |
+          dotnet publish tests/TranscribeGeek.Tests/TranscribeGeek.Tests.csproj \
+            -c Release -r linux-x64 --self-contained true \
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o publish/checks
+          ./publish/checks/TranscribeGeek.Tests
