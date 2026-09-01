@@ -30,9 +30,9 @@
   </Company_Info>
   <Program_Info>
     <Program_Name>TranscribeGeek</Program_Name>
-    <Program_Version>1.0.1</Program_Version>
-    <Program_Release_Month>08</Program_Release_Month>
-    <Program_Release_Day>30</Program_Release_Day>
+    <Program_Version>1.1.0</Program_Version>
+    <Program_Release_Month>09</Program_Release_Month>
+    <Program_Release_Day>01</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
     <Program_Cost_Dollars>0</Program_Cost_Dollars>
     <Program_Type>Freeware</Program_Type>
@@ -40,7 +40,7 @@
     <Program_Install_Support>Install and Uninstall</Program_Install_Support>
     <Program_OS_Support>Win10,Win11,WinServer</Program_OS_Support>
     <Program_Language>English</Program_Language>
-    <Program_Change_Info>Application icon redrawn to match the TechyGeeksHome house style. No functional changes.</Program_Change_Info>
+    <Program_Change_Info>Adds speaker recognition. Each line of the transcript can now be labelled Speaker 1, Speaker 2 and so on. It runs on your own machine and needs a 36 MB speaker pack downloaded from the Models screen.</Program_Change_Info>
     <Program_Specific_Category>Audio &amp; Multimedia::Speech</Program_Specific_Category>
     <Program_Category_Class>Audio &amp; Multimedia</Program_Category_Class>
     <Program_System_Requirements>Windows 10 version 1809 or later, 64-bit. Nothing else to install.</Program_System_Requirements>
@@ -55,18 +55,20 @@
   </Program_Info>
   <Program_Descriptions>
     <English>
-      <Keywords>transcription, whisper, speech to text, subtitles, srt, offline, free, windows</Keywords>
+      <Keywords>transcription, whisper, speech to text, speaker diarisation, subtitles, srt, offline, free, windows</Keywords>
       <Char_Desc_45>Offline speech-to-text for Windows</Char_Desc_45>
-      <Char_Desc_80>Turns recordings into text on your own machine - transcripts and subtitles</Char_Desc_80>
+      <Char_Desc_80>Turns recordings into text on your own machine, with speaker labels</Char_Desc_80>
       <Char_Desc_250>TranscribeGeek turns audio and video into text on your own machine. It runs OpenAI Whisper models locally, writes a transcript and an SRT subtitle file, and has no account, no upload and no per-minute limit.</Char_Desc_250>
-      <Char_Desc_450>TranscribeGeek turns audio and video recordings into text on your own machine. It runs OpenAI Whisper models locally through whisper.cpp, writing a plain text transcript beside the source file and, optionally, a SubRip SRT subtitle file. There is no account, no server, no upload and no per-minute limit. Four model sizes are downloaded on request rather than bundled, and 22 languages are supported plus automatic detection.</Char_Desc_450>
+      <Char_Desc_450>TranscribeGeek turns audio and video recordings into text on your own machine, running OpenAI Whisper models locally through whisper.cpp. It writes a plain text transcript beside the source file and, if you want one, a SubRip SRT subtitle file. It can also work out who is speaking and label each line Speaker 1, Speaker 2 and so on. No account, no server, no upload, no per-minute limit. 22 languages plus auto detection.</Char_Desc_450>
       <Char_Desc_2000>TranscribeGeek turns audio and video recordings into text on your own machine.
 
 Drop files in, pick a model and a language, and press Transcribe. Each file gets a plain text transcript written beside it, with or without timestamps, and a SubRip SRT subtitle file too if you want one. Supported input includes WAV, MP3, M4A, FLAC, OGG, Opus, WMA, AAC, MP4, MKV, MOV, AVI and WebM.
 
-It runs OpenAI Whisper models locally through whisper.cpp. There is no account, no server and no upload - the recording never leaves the computer it is on. There is no per-minute cap, no monthly allowance and no trial.
+It runs OpenAI Whisper models locally through whisper.cpp. There is no account, no server and no upload, the recording never leaves the computer it is on. There is no per-minute cap, no monthly allowance and no trial.
 
-Four model sizes are offered, from 78 MB to 1.5 GB, and none of them are bundled into the installer: you pick one on the Models screen and it is fetched once and kept. 22 languages are supported, plus automatic language detection.
+New in 1.1: TranscribeGeek can work out who is speaking. Tick the option and each line is labelled Speaker 1, Speaker 2 and so on, numbered in the order the voices are first heard, and you can tell it how many people are on the recording if you know. That needs a 36 MB speaker pack from the Models screen, which is checked against a SHA-256 recorded inside the application before it is kept. It is a good guess rather than a certainty, and the application says so on screen instead of pretending otherwise.
+
+Four Whisper model sizes are offered, from 78 MB to 1.5 GB, and none of them are bundled into the installer: you pick one on the Models screen and it is fetched once and kept. 22 languages are supported, plus automatic language detection.
 
 TranscribeGeek never overwrites your files. If a transcript of that name already exists, the next one is numbered. ffmpeg is used as a separate program for formats other than plain WAV and is deliberately not bundled.
 
