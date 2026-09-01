@@ -23,5 +23,16 @@ jobs:
       - name: Build
         run: dotnet build TranscribeGeek.sln -c Release
 
+      # Speaker recognition is the one part of this that is native code plus downloaded model
+      # files, which is exactly the sort of thing that passes a unit test and then falls over on
+      # a real machine. So CI runs it for real, on a two speaker sample, and the checks fail if
+      # the models do not match their recorded checksums or the speakers come back wrong.
+      - name: Fetch a two speaker sample
+        run: |
+          curl -sSL -o /tmp/two-speakers.wav \
+            https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-segmentation-models/1-two-speakers-en.wav
+
       - name: Test
+        env:
+          TG_DIARISE_WAV: /tmp/two-speakers.wav
         run: dotnet run --project tests/TranscribeGeek.Tests -c Release --no-build
