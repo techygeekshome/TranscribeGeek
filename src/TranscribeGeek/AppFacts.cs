@@ -16,7 +16,8 @@ internal static class AppFacts
             "Drop in audio or video and TranscribeGeek writes out a transcript and, if you want one, " +
             "a subtitle file. It uses OpenAI's Whisper speech models running locally through " +
             "whisper.cpp - there is no account, no server, no upload and no per-minute limit. " +
-            "The recording never leaves the computer it is on.",
+            "It can also work out who is speaking, labelling each line Speaker 1, Speaker 2 and " +
+            "so on. The recording never leaves the computer it is on.",
         GitHubOwner = "techygeekshome",
         GitHubRepo = "TranscribeGeek",
         ProductUrl = "https://techygeekshome.info/transcribegeek/",
@@ -27,6 +28,10 @@ internal static class AppFacts
             new Credit("Whisper.net", "MIT", "https://github.com/sandrohanea/whisper.net"),
             new Credit("whisper.cpp", "MIT", "https://github.com/ggerganov/whisper.cpp"),
             new Credit("Whisper models", "MIT (OpenAI)", "https://github.com/openai/whisper"),
+            new Credit("sherpa-onnx", "Apache-2.0", "https://github.com/k2-fsa/sherpa-onnx"),
+            new Credit("pyannote segmentation 3.0", "MIT (CNRS)", "https://huggingface.co/pyannote/segmentation-3.0"),
+            new Credit("CAM++ speaker model", "Apache-2.0 (3D-Speaker)", "https://github.com/modelscope/3D-Speaker"),
+            new Credit("ONNX Runtime", "MIT", "https://onnxruntime.ai"),
             new Credit("Avalonia", "MIT", "https://avaloniaui.net"),
             new Credit("ffmpeg", "Used as a separate program, never linked", "https://ffmpeg.org")
         }
