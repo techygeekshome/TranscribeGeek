@@ -53,3 +53,13 @@ jobs:
             -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
             -o publish/checks
           ./publish/checks/TranscribeGeek.Tests
+
+      # And again with the two routes that depend on the .NET host turned off, so the one that
+      # does not depend on it is exercised on every build rather than only on the machine of
+      # whoever hits the problem. This is the route the product now relies on, because 1.1.1
+      # relied on the host putting the library where it was expected and that turned out not to
+      # be true on Windows.
+      - name: Test the route that does not depend on the host
+        env:
+          TG_FORCE_EMBEDDED: '1'
+        run: ./publish/checks/TranscribeGeek.Tests
