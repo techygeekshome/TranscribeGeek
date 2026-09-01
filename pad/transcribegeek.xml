@@ -30,7 +30,7 @@
   </Company_Info>
   <Program_Info>
     <Program_Name>TranscribeGeek</Program_Name>
-    <Program_Version>1.1.0</Program_Version>
+    <Program_Version>1.1.1</Program_Version>
     <Program_Release_Month>09</Program_Release_Month>
     <Program_Release_Day>01</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
@@ -40,7 +40,7 @@
     <Program_Install_Support>Install and Uninstall</Program_Install_Support>
     <Program_OS_Support>Win10,Win11,WinServer</Program_OS_Support>
     <Program_Language>English</Program_Language>
-    <Program_Change_Info>Adds speaker recognition. Each line of the transcript can now be labelled Speaker 1, Speaker 2 and so on. It runs on your own machine and needs a 36 MB speaker pack downloaded from the Models screen.</Program_Change_Info>
+    <Program_Change_Info>Fixes transcription failing with "Native Library not found" in the installed and portable builds. The speech library was inside the single executable and was being looked for beside it. Affected 1.0.0 and 1.0.1 as well as 1.1.0.</Program_Change_Info>
     <Program_Specific_Category>Audio &amp; Multimedia::Speech</Program_Specific_Category>
     <Program_Category_Class>Audio &amp; Multimedia</Program_Category_Class>
     <Program_System_Requirements>Windows 10 version 1809 or later, 64-bit. Nothing else to install.</Program_System_Requirements>
