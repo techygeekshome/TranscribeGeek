@@ -24,6 +24,9 @@ public sealed class TranscriptionEngine : IDisposable
     {
         if (_factory is not null && _loadedModelPath == modelPath) return _factory;
 
+        // Must happen before the first call into Whisper.net. See WhisperRuntime for why.
+        WhisperRuntime.Prepare();
+
         _factory?.Dispose();
         _factory = WhisperFactory.FromPath(modelPath);
         _loadedModelPath = modelPath;
