@@ -25,4 +25,24 @@
     <PackageReference Include="org.k2fsa.sherpa.onnx.runtime.linux-x64" Version="1.13.5"
                       Condition="'$(OS)' != 'Windows_NT'" />
   </ItemGroup>
+
+  <!-- The native Whisper libraries are embedded as resources as well as being carried by the
+       Whisper.net.Runtime package.
+
+       This looks like belt and braces and it is. TranscribeGeek ships as one executable, and
+       what the .NET host does with bundled native libraries at startup is not something the
+       product should be betting on: 1.0.0 and 1.0.1 both installed perfectly and then failed on
+       the first file because Whisper.net could not find its own library. Carrying a copy inside
+       the assembly means WhisperRuntime can always put the files somewhere it chose itself and
+       point Whisper.net straight at them. It costs under two megabytes. -->
+  <ItemGroup>
+    <EmbeddedResource Include="$(NuGetPackageRoot)whisper.net.runtime/1.9.1/build/win-x64/*.dll"
+                      Condition="Exists('$(NuGetPackageRoot)whisper.net.runtime/1.9.1/build/win-x64')">
+      <LogicalName>native.win-x64.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(NuGetPackageRoot)whisper.net.runtime/1.9.1/build/linux-x64/*.so"
+                      Condition="Exists('$(NuGetPackageRoot)whisper.net.runtime/1.9.1/build/linux-x64')">
+      <LogicalName>native.linux-x64.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>
