@@ -22,8 +22,23 @@ public static class TranscriptWriter
         var path = NextFreePath(sourcePath, ".txt");
         var sb = new StringBuilder();
 
+        // When speakers were worked out, the name only goes in where it changes. A transcript
+        // that says "Speaker 1:" on forty consecutive lines is harder to read than one that
+        // says it once, and a reader already assumes the same person is still talking.
+        string? lastSpeaker = null;
+        var anySpeakers = segments.Any(s => s.Speaker is not null);
+        var wroteHeading = false;
+
         foreach (var s in segments)
         {
+            if (anySpeakers && (s.Speaker != lastSpeaker || !wroteHeading))
+            {
+                if (wroteHeading) sb.AppendLine();
+                sb.AppendLine((s.Speaker ?? "Unidentified speaker") + ":");
+                lastSpeaker = s.Speaker;
+                wroteHeading = true;
+            }
+
             if (includeTimestamps)
                 sb.Append('[').Append(Hms(s.Start)).Append("]  ");
             sb.AppendLine(s.Text);
@@ -48,6 +63,10 @@ public static class TranscriptWriter
             var s = segments[i];
             sb.Append(i + 1).Append('\n');
             sb.Append(Srt(s.Start)).Append(" --> ").Append(Srt(s.End)).Append('\n');
+
+            // Subtitles get the name on every line, unlike the text file. A viewer sees one
+            // caption at a time and has nothing to carry over from the last one.
+            if (s.Speaker is not null) sb.Append(s.Speaker).Append(": ");
             sb.Append(s.Text).Append('\n').Append('\n');
         }
 
