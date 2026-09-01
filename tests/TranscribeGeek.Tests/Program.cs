@@ -120,6 +120,21 @@ Check("default is small", ModelCatalog.Default.Id == "small");
 Check("model path is under LocalApplicationData",
     ModelCatalog.PathFor(ModelCatalog.Default).Contains("TranscribeGeek"));
 
+// ---- Where the native Whisper library was found ------------------------------------
+// This is the check that a packaged build needs and a build from source does not. Run from a
+// build folder the library sits in runtimes/ next to the assembly and everything works. Run
+// as the single executable the product actually ships as, the library is inside the bundle and
+// Whisper.net looks for it in the wrong place, which is how 1.0.0 and 1.0.1 shipped able to
+// install, able to download a model, and unable to transcribe a single file.
+{
+    WhisperRuntime.Prepare();
+    Check("the native Whisper library was located", WhisperRuntime.ResolvedPath is not null,
+        WhisperRuntime.ResolvedPath ?? "not found");
+
+    if (WhisperRuntime.ResolvedPath is { } where)
+        Check("and it is really there", Directory.Exists(where), where);
+}
+
 // ---- End to end, only if a model has already been fetched -------------------------
 var model = Environment.GetEnvironmentVariable("TG_TEST_MODEL");
 if (model is not null && File.Exists(model) && File.Exists(sample))
@@ -127,8 +142,17 @@ if (model is not null && File.Exists(model) && File.Exists(sample))
     using var engine = new TranscriptionEngine();
     var got = await engine.TranscribeAsync(sample, model, "en");
     var all = string.Join(" ", got.Select(s => s.Text));
-    Check("transcribes the sample", all.Contains("country", StringComparison.OrdinalIgnoreCase), all[..Math.Min(90, all.Length)]);
+
+    Check("transcribes the sample into words", all.Trim().Length > 20 && all.Any(char.IsLetter),
+        all[..Math.Min(90, all.Length)]);
     Check("segments carry timings", got.Count > 0 && got[0].End > got[0].Start);
+    Check("the segments run in order", got.Zip(got.Skip(1)).All(p => p.Second.Start >= p.First.Start));
+
+    // The JFK clip is the usual sample and its words are known, so when it is the one in use
+    // the transcript is checked against them rather than merely against being non-empty.
+    if (sample.Contains("jfk", StringComparison.OrdinalIgnoreCase))
+        Check("the known sample transcribes correctly",
+            all.Contains("country", StringComparison.OrdinalIgnoreCase), all[..Math.Min(90, all.Length)]);
 }
 else
 {
