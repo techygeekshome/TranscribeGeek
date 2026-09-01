@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>transcribegeek</id>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <title>TranscribeGeek</title>
     <authors>TechyGeeksHome</authors>
     <owners>techygeekshome</owners>
@@ -23,7 +23,7 @@ computer.
 
 Open source under GPL-3.0. The .NET 8 runtime is bundled, so there is nothing to install first.</description>
     <summary>Free offline speech-to-text for Windows - transcribe audio and video on your own machine</summary>
-    <releaseNotes>https://github.com/techygeekshome/TranscribeGeek/releases/tag/v1.1.1</releaseNotes>
+    <releaseNotes>https://github.com/techygeekshome/TranscribeGeek/releases/tag/v1.1.2</releaseNotes>
     <copyright>Copyright (c) 2026 TechyGeeksHome</copyright>
     <tags>transcribegeek transcription speech-to-text whisper subtitles diarization offline windows foss</tags>
     <projectSourceUrl>https://github.com/techygeekshome/TranscribeGeek</projectSourceUrl>
