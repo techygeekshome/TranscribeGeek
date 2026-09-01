@@ -133,6 +133,43 @@ Check("model path is under LocalApplicationData",
 
     if (WhisperRuntime.ResolvedPath is { } where)
         Check("and it is really there", Directory.Exists(where), where);
+
+    Check("it says how it found it", WhisperRuntime.Source.Length > 0, WhisperRuntime.Source);
+
+    // The copy inside the assembly is the route that does not depend on the .NET host putting
+    // anything anywhere. It is the one that has to work, so it is checked on its own rather than
+    // only when the other two have failed, which on a build machine is never.
+    var embedded = WhisperRuntime.EmbeddedNames();
+    Check("the native library is carried inside the app", embedded.Count >= 4,
+        embedded.Count + " files");
+
+    var scratch = Path.Combine(Path.GetTempPath(), "tg-embedded-" + Guid.NewGuid().ToString("N"));
+    try
+    {
+        var written = WhisperRuntime.WriteEmbeddedCopy(scratch);
+        Check("and it can be written out in the shape Whisper.net wants", written is not null,
+            written ?? "nothing written");
+
+        if (written is not null)
+        {
+            var files = Directory.GetFiles(written);
+            Check("every file came out", files.Length == embedded.Count,
+                files.Length + " of " + embedded.Count);
+            Check("and none of them is empty", files.All(f => new FileInfo(f).Length > 0));
+
+            // Writing it twice must not corrupt or duplicate anything: the second run finds the
+            // files already correct and leaves them alone.
+            var again = WhisperRuntime.WriteEmbeddedCopy(scratch);
+            Check("writing it a second time changes nothing", again == written &&
+                Directory.GetFiles(written).Length == files.Length);
+            Check("no half written file is left behind",
+                Directory.GetFiles(written, "*.part").Length == 0);
+        }
+    }
+    finally
+    {
+        try { Directory.Delete(scratch, recursive: true); } catch { }
+    }
 }
 
 // ---- End to end, only if a model has already been fetched -------------------------
