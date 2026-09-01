@@ -60,7 +60,59 @@ var txt2 = TranscriptWriter.WritePlainText(fakeSource, segs, includeTimestamps: 
 Check("second run does not overwrite the first", txt2 != txt && txt2.EndsWith("interview (2).txt"), txt2);
 Check("first transcript still intact", File.ReadAllText(txt).Contains("[00:00:00]  First line."));
 
+// speaker labels: a heading where the speaker changes in the text file, on every line in the srt
+var spoken = new List<TranscriptSegment>
+{
+    new(TimeSpan.FromSeconds(0),   TimeSpan.FromSeconds(2), "Morning.",       "Speaker 1"),
+    new(TimeSpan.FromSeconds(2),   TimeSpan.FromSeconds(4), "Still me.",      "Speaker 1"),
+    new(TimeSpan.FromSeconds(4),   TimeSpan.FromSeconds(6), "My turn now.",   "Speaker 2"),
+};
+var spokenTxt = File.ReadAllText(TranscriptWriter.WritePlainText(fakeSource, spoken, includeTimestamps: false));
+Check("speaker heading written once per change",
+    spokenTxt.Split("Speaker 1:").Length == 2 && spokenTxt.Contains("Speaker 2:"), spokenTxt.Replace("\n", " | "));
+Check("speaker heading is not repeated on every line",
+    !spokenTxt.Contains("Speaker 1:\nMorning.\nSpeaker 1:"));
+
+var spokenSrt = File.ReadAllText(TranscriptWriter.WriteSubRip(fakeSource, spoken));
+Check("srt names the speaker on every caption",
+    spokenSrt.Contains("Speaker 1: Morning.") && spokenSrt.Contains("Speaker 1: Still me.")
+    && spokenSrt.Contains("Speaker 2: My turn now."));
+
+// unlabelled segments must come out exactly as they went in
+var plainSrt = File.ReadAllText(TranscriptWriter.WriteSubRip(fakeSource, segs));
+Check("no speaker prefix when speakers were not worked out", !plainSrt.Contains(": First line."));
+
 Directory.Delete(tmp, true);
+
+// ---- Assigning speakers to lines --------------------------------------------------
+var turns = new List<SpeakerTurn>
+{
+    new(TimeSpan.FromSeconds(0),  TimeSpan.FromSeconds(5),  1),
+    new(TimeSpan.FromSeconds(6),  TimeSpan.FromSeconds(12), 2),
+};
+var lines = new List<TranscriptSegment>
+{
+    new(TimeSpan.FromSeconds(0.5),  TimeSpan.FromSeconds(4),    "Clearly the first."),
+    new(TimeSpan.FromSeconds(4.5),  TimeSpan.FromSeconds(7),    "Straddles the handover, mostly the second."),
+    new(TimeSpan.FromSeconds(8),    TimeSpan.FromSeconds(11),   "Clearly the second."),
+    new(TimeSpan.FromSeconds(40),   TimeSpan.FromSeconds(42),   "Miles away from any turn."),
+};
+var assigned = SpeakerDiarizer.Assign(lines, turns);
+Check("a line inside one turn takes that speaker", assigned[0].Speaker == "Speaker 1", assigned[0].Speaker);
+Check("a straddling line goes to whoever spoke most of it", assigned[1].Speaker == "Speaker 2", assigned[1].Speaker);
+Check("a far away line is left unlabelled", assigned[3].Speaker is null, assigned[3].Speaker);
+Check("speakers are counted, not guessed", SpeakerDiarizer.CountSpeakers(assigned) == 2);
+Check("no turns means the lines come back untouched",
+    ReferenceEquals(SpeakerDiarizer.Assign(lines, Array.Empty<SpeakerTurn>()), lines));
+
+// ---- SpeakerModelCatalog ----------------------------------------------------------
+Check("the speaker pack is two files", SpeakerModelCatalog.All.Count == 2);
+Check("both have a full 64 character sha256 recorded",
+    SpeakerModelCatalog.All.All(f => f.Sha256.Length == 64 && f.Sha256.All(c => char.IsAsciiHexDigitLower(c))));
+Check("the pack is under 40 MB", SpeakerModelCatalog.TotalBytes is > 30_000_000 and < 40_000_000,
+    SpeakerModelCatalog.TotalBytes.ToString());
+Check("speaker models sit under the speech model folder",
+    SpeakerModelCatalog.Directory.StartsWith(ModelCatalog.ModelDirectory));
 
 // ---- ModelCatalog -----------------------------------------------------------------
 Check("four models offered", ModelCatalog.All.Count == 4);
@@ -81,6 +133,38 @@ if (model is not null && File.Exists(model) && File.Exists(sample))
 else
 {
     Console.WriteLine("SKIP  end-to-end transcription (set TG_TEST_MODEL to a ggml .bin to run it)");
+}
+
+// ---- Diarisation, end to end ------------------------------------------------------
+// The one part of this that is hard to get right is the native call and the model files, so it
+// is worth actually running rather than only unit testing the arithmetic around it. Downloading
+// 36 MB is not something to do on every build, so it runs when TG_DIARISE_WAV points at a
+// 16 kHz mono WAV with more than one person on it.
+var speech = Environment.GetEnvironmentVariable("TG_DIARISE_WAV");
+if (speech is not null && File.Exists(speech))
+{
+    if (!SpeakerModelCatalog.IsReady) await SpeakerModelCatalog.DownloadAsync();
+
+    Check("both speaker models verified and kept", SpeakerModelCatalog.IsReady);
+    Check("segmentation model matches its recorded checksum",
+        SpeakerModelCatalog.Sha256(SpeakerModelCatalog.PathFor(SpeakerModelCatalog.Segmentation))
+        == SpeakerModelCatalog.Segmentation.Sha256);
+
+    using var diarizer = new SpeakerDiarizer();
+    var got = await diarizer.DiarizeAsync(speech);
+
+    Check("turns come back", got.Count > 0, got.Count.ToString());
+    Check("turns are in time order", got.Zip(got.Skip(1)).All(p => p.Second.Start >= p.First.Start));
+    Check("every turn ends after it starts", got.All(t => t.End > t.Start));
+    Check("speakers are numbered from 1 with no gaps",
+        got.Select(t => t.Speaker).Distinct().OrderBy(n => n).SequenceEqual(
+            Enumerable.Range(1, got.Select(t => t.Speaker).Distinct().Count())),
+        string.Join(",", got.Select(t => t.Speaker).Distinct()));
+    Check("the first voice heard is Speaker 1", got[0].Speaker == 1);
+}
+else
+{
+    Console.WriteLine("SKIP  diarisation (set TG_DIARISE_WAV to a 16 kHz mono WAV to run it)");
 }
 
 Console.WriteLine(failed == 0 ? "\nAll checks passed." : $"\n{failed} check(s) failed.");
