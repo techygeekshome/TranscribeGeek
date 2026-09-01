@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>transcribegeek</id>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
     <title>TranscribeGeek</title>
     <authors>TechyGeeksHome</authors>
     <owners>techygeekshome</owners>
@@ -17,14 +17,15 @@ computer.
 * Transcribe audio and video files, queued in a batch
 * Choose the Whisper model to match the machine - the download size is shown before you commit
 * Output plain text or timed SRT subtitles
+* Work out who is speaking and label each line Speaker 1, Speaker 2 and so on
 * Works with no internet connection once a model has been downloaded
 * No account, no adverts, no bundled offers, no per-minute charge
 
 Open source under GPL-3.0. The .NET 8 runtime is bundled, so there is nothing to install first.</description>
     <summary>Free offline speech-to-text for Windows - transcribe audio and video on your own machine</summary>
-    <releaseNotes>https://github.com/techygeekshome/TranscribeGeek/releases/tag/v1.0.1</releaseNotes>
+    <releaseNotes>https://github.com/techygeekshome/TranscribeGeek/releases/tag/v1.1.0</releaseNotes>
     <copyright>Copyright (c) 2026 TechyGeeksHome</copyright>
-    <tags>transcribegeek transcription speech-to-text whisper subtitles offline windows foss</tags>
+    <tags>transcribegeek transcription speech-to-text whisper subtitles diarization offline windows foss</tags>
     <projectSourceUrl>https://github.com/techygeekshome/TranscribeGeek</projectSourceUrl>
     <packageSourceUrl>https://github.com/techygeekshome/TranscribeGeek</packageSourceUrl>
     <docsUrl>https://techygeekshome.info/transcribegeek/</docsUrl>
