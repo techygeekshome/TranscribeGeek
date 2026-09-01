@@ -7,7 +7,7 @@
     <authors>TechyGeeksHome</authors>
     <owners>techygeekshome</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <license type="expression">GPL-3.0-or-later</license>
+    <licenseUrl>https://github.com/techygeekshome/TranscribeGeek/blob/main/LICENSE</licenseUrl>
     <projectUrl>https://techygeekshome.info/transcribegeek/</projectUrl>
     <iconUrl>https://cdn.jsdelivr.net/gh/techygeekshome/TranscribeGeek@78e90e11cec026d6664ba3fca8761dd4fcbeaaeb/icons/transcribegeek-256.png</iconUrl>
     <description>TranscribeGeek turns recordings into text on your own machine, using Whisper models that run
