@@ -46,5 +46,36 @@ public enum JobState
     Cancelled
 }
 
-/// <summary>One timed line of transcript.</summary>
-public sealed record TranscriptSegment(TimeSpan Start, TimeSpan End, string Text);
+/// <summary>
+/// One timed line of transcript.
+/// </summary>
+/// <param name="Speaker">
+/// "Speaker 1", "Speaker 2" and so on, or null when speakers were not worked out. Numbered in
+/// the order they first talk, because that is the order somebody reading the transcript meets
+/// them in. The app never tries to guess a real name.
+/// </param>
+public sealed record TranscriptSegment(TimeSpan Start, TimeSpan End, string Text, string? Speaker = null);
+
+/// <summary>A stretch of audio one person is talking over, before any text is attached to it.</summary>
+public sealed record SpeakerTurn(TimeSpan Start, TimeSpan End, int Speaker);
+
+/// <summary>
+/// One of the two files the speaker pack is made of. Both are needed, both are checked against
+/// a hash recorded here, and neither is in the installer.
+/// </summary>
+/// <param name="FileName">What it is saved as.</param>
+/// <param name="Url">Where it comes from.</param>
+/// <param name="Bytes">Exact size, so a truncated download is caught before the hash is even run.</param>
+/// <param name="Sha256">Lower case hex. A file that does not match is deleted, not used.</param>
+/// <param name="Origin">Who made it and under what licence, shown on the Models screen.</param>
+public sealed record SpeakerModelFile(string FileName, string Url, long Bytes, string Sha256, string Origin);
+
+/// <summary>
+/// What came back from one file: the lines, how many people were heard, and, if working out
+/// speakers was asked for and did not work, why. A speaker problem is never a failed job -
+/// the transcript is still there.
+/// </summary>
+public sealed record TranscriptionResult(
+    IReadOnlyList<TranscriptSegment> Segments,
+    int SpeakerCount,
+    string? SpeakerProblem);
