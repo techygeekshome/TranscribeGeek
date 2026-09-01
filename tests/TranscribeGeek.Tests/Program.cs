@@ -141,7 +141,15 @@ else
 // 36 MB is not something to do on every build, so it runs when TG_DIARISE_WAV points at a
 // 16 kHz mono WAV with more than one person on it.
 var speech = Environment.GetEnvironmentVariable("TG_DIARISE_WAV");
-if (speech is not null && File.Exists(speech))
+if (!string.IsNullOrWhiteSpace(speech))
+{
+    // If the variable is set, the checks below MUST run. A sample that failed to download and
+    // quietly turned into a skip would leave a green build that proved nothing, which is worse
+    // than no check at all.
+    Check("the diarisation sample is where TG_DIARISE_WAV points", File.Exists(speech), speech);
+}
+
+if (!string.IsNullOrWhiteSpace(speech) && File.Exists(speech))
 {
     if (!SpeakerModelCatalog.IsReady) await SpeakerModelCatalog.DownloadAsync();
 
@@ -161,6 +169,9 @@ if (speech is not null && File.Exists(speech))
             Enumerable.Range(1, got.Select(t => t.Speaker).Distinct().Count())),
         string.Join(",", got.Select(t => t.Speaker).Distinct()));
     Check("the first voice heard is Speaker 1", got[0].Speaker == 1);
+    Check("more than one person was heard on a two speaker sample",
+        got.Select(t => t.Speaker).Distinct().Count() >= 2,
+        string.Join(",", got.Select(t => $"{t.Start.TotalSeconds:0.0}-{t.End.TotalSeconds:0.0}:S{t.Speaker}")));
 }
 else
 {
