@@ -28,7 +28,20 @@ public sealed class TranscriptionEngine : IDisposable
         WhisperRuntime.Prepare();
 
         _factory?.Dispose();
-        _factory = WhisperFactory.FromPath(modelPath);
+        try
+        {
+            _factory = WhisperFactory.FromPath(modelPath);
+        }
+        catch (Exception ex)
+        {
+            // Whisper.net's own message for a missing library says nothing about where it looked,
+            // which is exactly what you need to know. Say where this build put the library and
+            // how it got there, so a screenshot of the failure is enough to work from.
+            throw new InvalidOperationException(
+                ex.Message.TrimEnd() + Environment.NewLine + Environment.NewLine +
+                "TranscribeGeek looked for it " + WhisperRuntime.Source +
+                (WhisperRuntime.ResolvedPath is { } p ? ", at " + p : "") + ".", ex);
+        }
         _loadedModelPath = modelPath;
         return _factory;
     }

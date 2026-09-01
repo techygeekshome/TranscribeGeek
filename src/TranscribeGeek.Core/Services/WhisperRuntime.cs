@@ -1,49 +1,48 @@
+using System.Reflection;
+using System.Security.Cryptography;
 using Whisper.net.LibraryLoader;
 
 namespace TranscribeGeek.Core.Services;
 
 /// <summary>
-/// Points Whisper.net at its own native libraries when TranscribeGeek is running as a single
-/// executable.
+/// Makes sure Whisper.net can find its own native library, whatever shape TranscribeGeek is
+/// running in.
 ///
-/// The problem, which is worth writing down because it produced a version that installed
-/// perfectly and then failed on the first file:
+/// This is worth writing down, because getting it wrong shipped two versions that installed
+/// perfectly and then failed on the very first file.
 ///
-/// TranscribeGeek ships as one file. The .NET host bundles the native libraries inside the
-/// executable and, at startup, extracts them to a temporary folder. Whisper.net does not use
-/// ordinary name-based P/Invoke to find its library; it goes looking for
+/// Whisper.net does not load its library by name. It goes looking for
 /// <c>runtimes/win-x64/whisper.dll</c> underneath a short list of directories, and every
-/// directory on that list points at where the executable is rather than at where the host put
-/// the extracted files. There is no <c>runtimes</c> folder next to the executable, because
-/// there is only the executable, so the search finds nothing and reports
+/// directory on that list is derived from where the executable is. TranscribeGeek ships as one
+/// executable, so there is no <c>runtimes</c> folder next to it, and the search finds nothing:
 /// "Native Library not found in default paths".
 ///
-/// Nothing about this is visible in a normal build: run from a build folder, or from a publish
-/// that is not a single file, and the <c>runtimes</c> folder is sitting right there. It only
-/// appears in the packaged product, which is exactly where it is least welcome.
+/// The obvious answer is to find the folder the .NET host extracted the bundle into and point
+/// Whisper.net at that. That is tried first and it is cheap. But it depends on the host putting
+/// the files where this code expects, in a layout nothing documents and nothing guarantees, on a
+/// platform this code cannot test on. Betting the product on it is what produced 1.1.1, which
+/// changed nothing a user could see.
 ///
-/// The fix is to find the extraction folder and hand it to Whisper.net through
-/// <c>RuntimeOptions.LibraryPath</c>, which is the first place its own search looks. The folder
-/// is not exposed by any API, but the host puts it somewhere predictable: a per-application
-/// folder under the bundle extraction base, with one subfolder per build. So this looks in that
-/// one place, checks each subfolder actually contains the library, and stops.
+/// So there is a second step that depends on nothing. The four native files are embedded in this
+/// assembly as resources. If the library cannot be found anywhere, they are written out to a
+/// folder under the user's own profile, in exactly the shape Whisper.net insists on, and
+/// Whisper.net is pointed at that. They are under two megabytes together, they are written once
+/// and checked by length and SHA-256 afterwards, so a half-written file from an interrupted first
+/// run is replaced rather than used.
 /// </summary>
 public static class WhisperRuntime
 {
     private static bool _done;
     private static readonly object Gate = new();
 
-    /// <summary>
-    /// Where the library was found, or null. Shown on the Settings screen, because "which copy
-    /// of whisper.dll is this actually using" is the first question when something is wrong.
-    /// </summary>
+    /// <summary>The folder Whisper.net will load from, or null if none could be arranged.</summary>
     public static string? ResolvedPath { get; private set; }
 
-    /// <summary>
-    /// Safe to call as often as you like; it does its work once. Never throws: if it cannot
-    /// work out where the library is, it leaves Whisper.net to try on its own and report its
-    /// own error, which is a better message than anything invented here.
-    /// </summary>
+    /// <summary>How it was found. Shown on the Settings screen, because "which copy is this
+    /// actually using" is the first question when something is wrong.</summary>
+    public static string Source { get; private set; } = "not looked yet";
+
+    /// <summary>Safe to call as often as you like; it does its work once. Never throws.</summary>
     public static void Prepare()
     {
         if (_done) return;
@@ -55,29 +54,51 @@ public static class WhisperRuntime
 
             try
             {
-                // Already laid out normally, which is every case except the packaged one.
+                // The build check sets this so it can prove the last route works on a machine
+                // where the first two always succeed. Without it that route would only ever run
+                // on a user's computer, which is not where you want to find out.
+                var forceEmbedded = Environment.GetEnvironmentVariable("TG_FORCE_EMBEDDED") == "1";
+
+                // 1. Laid out normally. Every build from source, and any publish that is not a
+                //    single file, lands here.
                 var beside = Path.Combine(AppContext.BaseDirectory, "runtimes", Rid);
-                if (File.Exists(Path.Combine(beside, LibraryFileName)))
+                if (!forceEmbedded && File.Exists(Path.Combine(beside, LibraryFileName)))
                 {
-                    ResolvedPath = beside;
+                    Use(beside, "beside the application");
                     return;
                 }
 
-                var extracted = FindExtractionDirectory();
-                if (extracted is null) return;
+                // 2. Wherever the host put the bundle. Free when it works.
+                var extracted = forceEmbedded ? null : FindExtractionDirectory();
+                if (extracted is not null)
+                {
+                    Use(Path.Combine(extracted, "runtimes", Rid), "unpacked by the .NET host");
+                    return;
+                }
 
-                // LibraryPath is treated as a path to a file: Whisper.net takes its directory
-                // and appends runtimes/{platform}-{architecture}. So it is given a name inside
-                // the extraction folder rather than the folder itself.
-                RuntimeOptions.LibraryPath = Path.Combine(extracted, "TranscribeGeek");
-                ResolvedPath = Path.Combine(extracted, "runtimes", Rid);
+                // 3. Our own copy, in our own folder. This one cannot go missing.
+                var written = WriteEmbeddedCopy();
+                if (written is not null) Use(written, "written from the copy inside the app");
+                else Source = "could not be found or written";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // A failure to look is not a failure to run. Whisper.net will try the ordinary
-                // paths and say so itself if they are not there either.
+                // paths and report its own error if they are not there either.
+                Source = "failed while looking: " + ex.Message;
             }
         }
+    }
+
+    private static void Use(string runtimeDirectory, string how)
+    {
+        // LibraryPath is read as a path to a file: Whisper.net takes its directory and appends
+        // runtimes/{platform}-{architecture}. So it is given a name inside the parent of the
+        // runtimes folder rather than the runtimes folder itself.
+        var parent = Directory.GetParent(Directory.GetParent(runtimeDirectory)!.FullName)!.FullName;
+        RuntimeOptions.LibraryPath = Path.Combine(parent, "TranscribeGeek");
+        ResolvedPath = runtimeDirectory;
+        Source = how;
     }
 
     private static string Rid =>
@@ -99,24 +120,18 @@ public static class WhisperRuntime
         : "libwhisper.so";
 
     /// <summary>
-    /// The folder the .NET host extracted the bundled native libraries into, or null if this is
-    /// not a single-file build or the folder cannot be found.
-    ///
-    /// The host uses {base}/{application name}/{build id}. The base is DOTNET_BUNDLE_EXTRACT_BASE_DIR
-    /// when it is set, and otherwise the platform's own default. The build id changes with every
-    /// build, so rather than trying to work it out, each candidate is checked for the library
-    /// itself. There are normally one or two.
+    /// The folder the .NET host extracted the bundle into, or null. The host uses
+    /// {base}/{application file name}/{build id}; rather than working the build id out, every
+    /// candidate is checked for the library itself.
     /// </summary>
     private static string? FindExtractionDirectory()
     {
         var exe = Environment.ProcessPath;
         if (string.IsNullOrEmpty(exe)) return null;
 
-        // Both spellings, because they are not always the same thing. The host names the folder
-        // after the executable file; on Windows that is TranscribeGeek.exe and dropping the
-        // extension is right, but a name that merely contains a dot has no extension to drop and
-        // trimming one takes a piece of the name off. Checking both costs nothing and the wrong
-        // one simply does not exist.
+        // Both spellings: the host names the folder after the executable file, and whether that
+        // keeps the extension has not been the same everywhere. The wrong one simply does not
+        // exist, so checking both costs nothing.
         var names = new[] { Path.GetFileName(exe), Path.GetFileNameWithoutExtension(exe) };
 
         foreach (var root in ExtractionRoots())
@@ -143,5 +158,72 @@ public static class WhisperRuntime
         yield return OperatingSystem.IsWindows()
             ? Path.Combine(Path.GetTempPath(), ".net")
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".net");
+    }
+
+    /// <summary>The resource names carried for the running platform, or empty if none.</summary>
+    public static IReadOnlyList<string> EmbeddedNames()
+    {
+        var prefix = "native." + Rid + ".";
+        return typeof(WhisperRuntime).Assembly.GetManifestResourceNames()
+            .Where(n => n.StartsWith(prefix, StringComparison.Ordinal))
+            .OrderBy(n => n, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Writes the embedded copies into the user's own profile and returns the folder, or null if
+    /// there is nothing embedded for this platform. Public so the checks can call it directly
+    /// rather than inferring that it worked.
+    /// </summary>
+    public static string? WriteEmbeddedCopy(string? intoRoot = null)
+    {
+        var names = EmbeddedNames();
+        if (names.Count == 0) return null;
+
+        var root = intoRoot ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "TechyGeeksHome", "TranscribeGeek", "native");
+
+        var target = Path.Combine(root, "runtimes", Rid);
+        Directory.CreateDirectory(target);
+
+        var assembly = typeof(WhisperRuntime).Assembly;
+        foreach (var name in names)
+        {
+            var fileName = name.Substring("native.".Length + Rid.Length + 1);
+            var path = Path.Combine(target, fileName);
+
+            using var source = assembly.GetManifestResourceStream(name);
+            if (source is null) continue;
+
+            if (AlreadyCorrect(path, source)) continue;
+
+            source.Position = 0;
+            var temp = path + ".part";
+            using (var destination = File.Create(temp)) source.CopyTo(destination);
+            File.Move(temp, path, overwrite: true);
+        }
+
+        return File.Exists(Path.Combine(target, LibraryFileName)) ? target : null;
+    }
+
+    /// <summary>
+    /// True when the file on disk is byte for byte what is embedded. Length first because it
+    /// settles it almost every time, then SHA-256, because a file left half written by a first
+    /// run that was interrupted is exactly the sort of thing that produces an unexplainable bug
+    /// six months later.
+    /// </summary>
+    private static bool AlreadyCorrect(string path, Stream embedded)
+    {
+        if (!File.Exists(path)) return false;
+        if (new FileInfo(path).Length != embedded.Length) return false;
+
+        embedded.Position = 0;
+        var wanted = SHA256.HashData(embedded);
+
+        using var existing = File.OpenRead(path);
+        var found = SHA256.HashData(existing);
+
+        return wanted.SequenceEqual(found);
     }
 }
