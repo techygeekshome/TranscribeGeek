@@ -1,43 +1,35 @@
 using System.Windows.Input;
 using Avalonia.Threading;
-using TranscribeGeek.Core.Models;
 using TranscribeGeek.Core.Services;
 
 namespace TranscribeGeek.ViewModels;
 
 /// <summary>
-/// One row on the Models screen: what a model is for, how big it is, and whether it is here yet.
-///
-/// Downloading is the only thing TranscribeGeek ever fetches from the internet, and it only
-/// happens when somebody presses the button on this row. That is worth stating plainly because
-/// the whole point of the app is that recordings never leave the machine.
+/// The speaker pack row on the Models screen. Two files, treated as one thing, because from the
+/// outside it is one thing: the ability to say who is talking.
 /// </summary>
-public sealed class ModelRowViewModel : ObservableObject
+public sealed class SpeakerPackViewModel : ObservableObject
 {
     private readonly ShellViewModel _shell;
     private CancellationTokenSource? _cts;
 
-    public ModelRowViewModel(WhisperModel model, ShellViewModel shell)
+    public SpeakerPackViewModel(ShellViewModel shell)
     {
-        Model = model;
         _shell = shell;
-
         Download = new RelayCommand(() => _ = DownloadAsync());
         Cancel = new RelayCommand(() => _cts?.Cancel());
-        Remove = new RelayCommand(RemoveModel);
+        Remove = new RelayCommand(RemovePack);
     }
 
-    public WhisperModel Model { get; }
-
-    public string Name => Model.Name;
-    public string Blurb => Model.Blurb;
-
-    /// <summary>The download size, or the real size on disk once it is here.</summary>
     public string SizeText => IsDownloaded
-        ? Bytes(ModelCatalog.SizeOnDisk(Model))
-        : Bytes(Model.ApproxBytes) + " download";
+        ? $"{SpeakerModelCatalog.SizeOnDisk / 1_000_000d:0} MB"
+        : $"{SpeakerModelCatalog.TotalBytes / 1_000_000d:0} MB download";
 
-    public bool IsDownloaded => ModelCatalog.IsDownloaded(Model);
+    /// <summary>Who made each model and under what licence. Shown, not buried in a credits box.</summary>
+    public string OriginText =>
+        string.Join("  ·  ", SpeakerModelCatalog.All.Select(f => f.Origin));
+
+    public bool IsDownloaded => SpeakerModelCatalog.IsReady;
     public bool IsMissing => !IsDownloaded && !IsDownloading;
 
     private bool _isDownloading;
@@ -58,7 +50,6 @@ public sealed class ModelRowViewModel : ObservableObject
     public double Progress { get => _progress; private set => SetField(ref _progress, value); }
 
     private string _note = "";
-    /// <summary>Whatever the row needs to say right now: progress, or why a download failed.</summary>
     public string Note { get => _note; private set => SetField(ref _note, value); }
 
     public ICommand Download { get; }
@@ -79,10 +70,10 @@ public sealed class ModelRowViewModel : ObservableObject
             var progress = new Progress<double>(p =>
             {
                 Progress = p * 100;
-                Note = $"{p:P0} of {Bytes(Model.ApproxBytes)}";
+                Note = $"{p:P0} of {SpeakerModelCatalog.TotalBytes / 1_000_000d:0} MB";
             });
 
-            await ModelCatalog.DownloadAsync(Model, progress, _cts.Token);
+            await SpeakerModelCatalog.DownloadAsync(progress, _cts.Token);
             Note = "";
         }
         catch (OperationCanceledException)
@@ -91,7 +82,7 @@ public sealed class ModelRowViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Log.Write($"Model {Model.Id}: {ex}");
+            Log.Write($"Speaker pack: {ex}");
             Note = "That download did not finish: " + ex.Message;
         }
         finally
@@ -100,15 +91,15 @@ public sealed class ModelRowViewModel : ObservableObject
             _cts = null;
             IsDownloading = false;
             Refresh();
-            _shell.OnModelsChanged(this);
+            _shell.OnSpeakerPackChanged();
         }
     }
 
-    private void RemoveModel()
+    private void RemovePack()
     {
         try
         {
-            ModelCatalog.Delete(Model);
+            SpeakerModelCatalog.Delete();
             Note = "";
         }
         catch (Exception ex)
@@ -117,7 +108,7 @@ public sealed class ModelRowViewModel : ObservableObject
         }
 
         Refresh();
-        _shell.OnModelsChanged(this);
+        _shell.OnSpeakerPackChanged();
     }
 
     public void Refresh()
@@ -133,14 +124,4 @@ public sealed class ModelRowViewModel : ObservableObject
         OnPropertyChanged(nameof(CanRemove));
         OnPropertyChanged(nameof(SizeText));
     }
-
-    /// <summary>
-    /// Sizes in the units people actually use. Whole numbers under a gigabyte - "465 MB" reads
-    /// better than "465.31 MB" and nobody is making a decision on the decimal.
-    /// </summary>
-    private static string Bytes(long b) => b >= 1_000_000_000
-        ? $"{b / 1_000_000_000d:0.0} GB"
-        : $"{b / 1_000_000d:0} MB";
-
-    public override string ToString() => $"{Name} · {SizeText}";
 }

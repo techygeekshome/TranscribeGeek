@@ -14,6 +14,7 @@ namespace TranscribeGeek.ViewModels;
 public sealed class ShellViewModel : ObservableObject
 {
     private readonly TranscriptionEngine _engine = new();
+    private readonly SpeakerDiarizer _diarizer = new();
     private CancellationTokenSource? _cts;
 
     public ShellViewModel()
@@ -24,6 +25,8 @@ public sealed class ShellViewModel : ObservableObject
 
         foreach (var m in ModelCatalog.All)
             Models.Add(new ModelRowViewModel(m, this));
+
+        SpeakerPack = new SpeakerPackViewModel(this);
 
         SelectedModel = Models.FirstOrDefault(m => m.IsDownloaded)
                         ?? Models.First(m => m.Model.Id == ModelCatalog.Default.Id);
@@ -65,6 +68,8 @@ public sealed class ShellViewModel : ObservableObject
     /// <summary>Shown on Settings so there is never a guess about where a gigabyte went.</summary>
     public string ModelFolder => ModelCatalog.ModelDirectory;
 
+    public string SpeakerFolder => SpeakerModelCatalog.Directory;
+
     public string FfmpegLocation => MediaDecoder.FindFfmpeg() ?? "Not found on this machine.";
 
     public string PageTitle => Page switch
@@ -80,7 +85,9 @@ public sealed class ShellViewModel : ObservableObject
     /// </summary>
     public string StatusLine => Page switch
     {
-        "Models" => $"{Models.Count(m => m.IsDownloaded)} of {Models.Count} downloaded · kept in {ModelCatalog.ModelDirectory}",
+        "Models" => $"{Models.Count(m => m.IsDownloaded)} of {Models.Count} speech models downloaded"
+                    + (SpeakerPack.IsDownloaded ? ", speaker pack ready" : ", speaker pack not downloaded")
+                    + $" · kept in {ModelCatalog.ModelDirectory}",
         "Settings" => "What TranscribeGeek will and will not do, in plain words.",
         _ => Jobs.Count == 0
             ? "Nothing queued. Drop audio or video files here - they are read on this machine and nothing is uploaded."
@@ -136,6 +143,25 @@ public sealed class ShellViewModel : ObservableObject
         RefreshReadiness();
     }
 
+    /// <summary>The two models that working out who is speaking needs. One row, two files.</summary>
+    public SpeakerPackViewModel SpeakerPack { get; }
+
+    /// <summary>
+    /// Called after the speaker pack is downloaded or removed. Turning the option on for somebody
+    /// who has just downloaded the pack is the obvious thing to do; turning it off when the pack
+    /// has gone is the honest one, because leaving a tick next to something that cannot run is a
+    /// promise the app cannot keep.
+    /// </summary>
+    public void OnSpeakerPackChanged()
+    {
+        if (SpeakerPack.IsDownloaded) IdentifySpeakers = true;
+        else IdentifySpeakers = false;
+
+        OnPropertyChanged(nameof(CanIdentifySpeakers));
+        OnPropertyChanged(nameof(SpeakerHint));
+        OnPropertyChanged(nameof(StatusLine));
+    }
+
     // ---------------------------------------------------------------- the queue
 
     public ObservableCollection<JobViewModel> Jobs { get; } = new();
@@ -185,6 +211,32 @@ public sealed class ShellViewModel : ObservableObject
 
     private bool _writeTimestamps = true;
     public bool WriteTimestamps { get => _writeTimestamps; set => SetField(ref _writeTimestamps, value); }
+
+    private bool _identifySpeakers;
+    /// <summary>Off until the speaker pack is here, and off again if it is removed.</summary>
+    public bool IdentifySpeakers
+    {
+        get => _identifySpeakers && CanIdentifySpeakers;
+        set { if (SetField(ref _identifySpeakers, value)) OnPropertyChanged(nameof(SpeakerHint)); }
+    }
+
+    public bool CanIdentifySpeakers => SpeakerPack.IsDownloaded;
+
+    /// <summary>The line under the tick box. Says the one thing the user needs to know right now.</summary>
+    public string SpeakerHint => CanIdentifySpeakers
+        ? "Adds a Speaker 1, Speaker 2 label to each line. It is a good guess, not a certainty - " +
+          "similar voices on a poor recording can be merged, and one voice can occasionally be split."
+        : "Needs the speaker pack, which is a " +
+          $"{SpeakerModelCatalog.TotalBytes / 1_000_000d:0} MB download on the Models screen.";
+
+    public ObservableCollection<SpeakerCountOption> SpeakerCounts { get; } = new(SpeakerCountOption.All);
+
+    private SpeakerCountOption _selectedSpeakerCount = SpeakerCountOption.All[0];
+    public SpeakerCountOption SelectedSpeakerCount
+    {
+        get => _selectedSpeakerCount;
+        set => SetField(ref _selectedSpeakerCount, value);
+    }
 
     // ---------------------------------------------------------------- running
 
@@ -238,9 +290,19 @@ public sealed class ShellViewModel : ObservableObject
                         vm.SetState(JobState.Running, $"Transcribing… {p:P0}");
                     });
 
-                    var segments = await _engine.TranscribeAsync(
+                    var speakerProgress = new Progress<double>(p =>
+                        vm.SetState(JobState.Running, $"Working out who is speaking… {p:P0}"));
+
+                    var result = await _engine.RunAsync(
                         vm.Job.SourcePath, modelPath, SelectedLanguage.Code,
-                        vm.Job.Duration, progress, _cts.Token);
+                        vm.Job.Duration, progress,
+                        IdentifySpeakers ? _diarizer : null,
+                        SelectedSpeakerCount.Count,
+                        speakerProgress,
+                        stage => vm.SetState(JobState.Running, stage),
+                        _cts.Token);
+
+                    var segments = result.Segments;
 
                     if (segments.Count == 0)
                     {
@@ -256,9 +318,18 @@ public sealed class ShellViewModel : ObservableObject
                     if (WriteSubtitles)
                         vm.Job.SubtitlePath = TranscriptWriter.WriteSubRip(vm.Job.SourcePath, segments);
 
-                    vm.SetState(JobState.Done,
-                        $"Saved {Path.GetFileName(vm.Job.TranscriptPath)}"
-                        + (vm.Job.SubtitlePath is null ? "" : $" and {Path.GetFileName(vm.Job.SubtitlePath)}"));
+                    var saved = $"Saved {Path.GetFileName(vm.Job.TranscriptPath)}"
+                                + (vm.Job.SubtitlePath is null ? "" : $" and {Path.GetFileName(vm.Job.SubtitlePath)}");
+
+                    // A speaker pass that did not work is said out loud next to a transcript that
+                    // did, rather than being swallowed or being allowed to fail the whole job.
+                    if (result.SpeakerProblem is not null)
+                        vm.SetState(JobState.Done, $"{saved}. Speakers were not worked out: {result.SpeakerProblem}");
+                    else if (result.SpeakerCount > 0)
+                        vm.SetState(JobState.Done,
+                            $"{saved}. {result.SpeakerCount} speaker{(result.SpeakerCount == 1 ? "" : "s")} found.");
+                    else
+                        vm.SetState(JobState.Done, saved);
                 }
                 catch (OperationCanceledException)
                 {
@@ -287,6 +358,28 @@ public sealed class ShellViewModel : ObservableObject
     }
 
     public void Cancel() => _cts?.Cancel();
+
+    /// <summary>Called when the window closes, so the loaded models are let go of properly.</summary>
+    public void Shutdown()
+    {
+        _cts?.Cancel();
+        _diarizer.Dispose();
+        _engine.Dispose();
+    }
+}
+
+/// <summary>
+/// How many people are on the recording. Worth asking, because it is the one thing the person
+/// dropping the file knows for certain and the model has to guess at.
+/// </summary>
+public sealed record SpeakerCountOption(int Count, string Name)
+{
+    public override string ToString() => Name;
+
+    public static readonly SpeakerCountOption[] All =
+        new[] { new SpeakerCountOption(0, "Work it out") }
+            .Concat(Enumerable.Range(2, 9).Select(n => new SpeakerCountOption(n, $"{n} people")))
+            .ToArray();
 }
 
 /// <summary>A language Whisper can be pointed at, plus the automatic option.</summary>
