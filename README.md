@@ -46,6 +46,25 @@ Windows 10 or 11, 64-bit. Nothing else to install.
 - 22 languages, or automatic detection
 - Works out who is speaking, labelling each line Speaker 1, Speaker 2 and so on
 
+
+## Screenshots
+
+<div align="center">
+
+**Transcribe** — drop files in, pick a model and a language, and let it work through the queue.
+
+<img src="docs/screenshots/01-transcribe.png" alt="The Transcribe screen with a finished transcript in the queue" width="820">
+
+**Models** — four speech models and the speaker pack, downloaded only when you ask.
+
+<img src="docs/screenshots/02-models.png" alt="The Models screen" width="820">
+
+**Settings** — a plain list of what TranscribeGeek will not do.
+
+<img src="docs/screenshots/03-settings.png" alt="The Settings screen" width="820">
+
+</div>
+
 ---
 
 ## What it will not do
