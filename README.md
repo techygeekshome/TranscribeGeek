@@ -19,6 +19,14 @@
 
 ---
 
+## 🎬 See it in action
+
+[![TranscribeGeek demo video](https://img.youtube.com/vi/eykR2ekTYYs/maxresdefault.jpg)](https://www.youtube.com/watch?v=eykR2ekTYYs)
+
+A recording turned into text, subtitles and speaker labels, in under a minute.
+
+---
+
 Drop in audio or video and TranscribeGeek writes out a transcript, and a `.srt` subtitle file if
 you want one. It runs OpenAI's Whisper speech models locally through
 [whisper.cpp](https://github.com/ggerganov/whisper.cpp). There is no account, no server, no
