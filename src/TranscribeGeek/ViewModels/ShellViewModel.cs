@@ -27,6 +27,7 @@ public sealed class ShellViewModel : ObservableObject
             Models.Add(new ModelRowViewModel(m, this));
 
         SpeakerPack = new SpeakerPackViewModel(this);
+        Ffmpeg = new FfmpegViewModel(this);
 
         SelectedModel = Models.FirstOrDefault(m => m.IsDownloaded)
                         ?? Models.First(m => m.Model.Id == ModelCatalog.Default.Id);
@@ -72,6 +73,9 @@ public sealed class ShellViewModel : ObservableObject
 
     public string FfmpegLocation => MediaDecoder.FindFfmpeg() ?? "Not found on this machine.";
 
+    /// <summary>The ffmpeg row on the Models screen.</summary>
+    public FfmpegViewModel Ffmpeg { get; }
+
     public string PageTitle => Page switch
     {
         "Models" => "Models",
@@ -107,6 +111,7 @@ public sealed class ShellViewModel : ObservableObject
     public void RefreshReadiness()
     {
         foreach (var m in Models) m.Refresh();
+        Ffmpeg?.Refresh();
 
         if (!Models.Any(m => m.IsDownloaded))
         {
@@ -117,7 +122,8 @@ public sealed class ShellViewModel : ObservableObject
         else if (!MediaDecoder.FfmpegAvailable)
         {
             Readiness = "ffmpeg was not found, so only 16 kHz mono WAV files can be read. " +
-                        "Put ffmpeg.exe next to TranscribeGeek to handle MP3, MP4, M4A and the rest.";
+                        "Open Models and choose Get ffmpeg to handle MP3, MP4, M4A and the rest. " +
+                        "Nothing is downloaded without you asking.";
             HasReadinessProblem = true;
         }
         else
@@ -128,6 +134,7 @@ public sealed class ShellViewModel : ObservableObject
 
         OnPropertyChanged(nameof(CanStart));
         OnPropertyChanged(nameof(StatusLine));
+        OnPropertyChanged(nameof(FfmpegLocation));
     }
 
     /// <summary>
