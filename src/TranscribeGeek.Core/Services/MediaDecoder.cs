@@ -15,8 +15,9 @@ namespace TranscribeGeek.Core.Services;
 /// impose licence terms on it that we have not signed up to. Running it as a child process and
 /// reading its output is explicitly fine, and is what every well-behaved application does.
 ///
-/// It is also not bundled. If ffmpeg is not present, the app says so plainly and still handles
-/// WAV, rather than silently downloading a 90 MB binary the user did not ask for.
+/// It is also not bundled. If ffmpeg is not present the app says so plainly and still handles
+/// WAV, and the Models screen offers to fetch it. Nothing is downloaded without being asked -
+/// see <see cref="FfmpegCatalog"/>, which pins an exact version and checks its hash.
 /// </summary>
 public sealed class MediaDecoder
 {
@@ -49,6 +50,14 @@ public sealed class MediaDecoder
         var beside = Path.Combine(AppContext.BaseDirectory, exe);
         if (File.Exists(beside)) { _ffmpegPath = beside; return _ffmpegPath; }
 
+        // A copy we fetched ourselves, checked before PATH so a broken or ancient ffmpeg
+        // somewhere on the system cannot take precedence over the one we know is good.
+        if (File.Exists(FfmpegCatalog.FfmpegPath))
+        {
+            _ffmpegPath = FfmpegCatalog.FfmpegPath;
+            return _ffmpegPath;
+        }
+
         foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "")
                      .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
         {
@@ -64,6 +73,16 @@ public sealed class MediaDecoder
     }
 
     public static bool FfmpegAvailable => FindFfmpeg() is not null;
+
+    /// <summary>
+    /// Clears the cached lookup. Called after ffmpeg is downloaded or removed, so the app does
+    /// not go on reporting the state it saw at startup until it is restarted.
+    /// </summary>
+    public static void ForgetFfmpegLookup()
+    {
+        _ffmpegChecked = false;
+        _ffmpegPath = null;
+    }
 
     /// <summary>
     /// Reads the WAV header to decide whether a file can go straight to Whisper. Only a plain
@@ -121,7 +140,8 @@ public sealed class MediaDecoder
         var ffmpeg = FindFfmpeg()
             ?? throw new MediaDecodeException(
                 $"{Path.GetExtension(sourcePath)} files need ffmpeg, and it was not found on this machine. " +
-                "Put ffmpeg.exe next to TranscribeGeek, or convert the file to a 16 kHz mono WAV first.");
+                "Open the Models screen and choose Get ffmpeg to fetch it, or put ffmpeg.exe next " +
+                "to TranscribeGeek yourself.");
 
         var temp = Path.Combine(Path.GetTempPath(),
             $"transcribegeek-{Guid.NewGuid():N}.wav");
@@ -162,6 +182,8 @@ public sealed class MediaDecoder
 
         var probe = Path.Combine(Path.GetDirectoryName(ffmpeg)!,
             OperatingSystem.IsWindows() ? "ffprobe.exe" : "ffprobe");
+        if (!File.Exists(probe) && File.Exists(FfmpegCatalog.FfprobePath))
+            probe = FfmpegCatalog.FfprobePath;
         if (!File.Exists(probe)) return null;
 
         try
